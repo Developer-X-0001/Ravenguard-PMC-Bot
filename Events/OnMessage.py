@@ -2,6 +2,7 @@ import re
 import config
 import sqlite3
 import discord
+
 from discord.ext import commands
 
 class OnMessageEvent(commands.Cog):
@@ -14,14 +15,15 @@ class OnMessageEvent(commands.Cog):
             return
 
         matches = re.findall(r"\d+\+", message.content)
-        users = message.mentions
+        if matches != []:    
+            users = message.mentions
 
-        user_data = ""
-        for match in matches:
-            user = users[matches.index(match)]
-            user_data += f"User {user.name} | Points {match}\n"
+            user_data = ""
+            for match in matches:
+                user = users[matches.index(match)]
+                user_data += f"User {user.name} | Points {match}\n"
 
-        await message.channel.send(content=user_data)
+            await message.channel.send(content=user_data)
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(OnMessageEvent(bot))

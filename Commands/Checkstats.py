@@ -14,7 +14,7 @@ class Checkstats(commands.Cog):
         if user is None:
             user = interaction.user
 
-        data = self.database.execute("SELECT points FROM UserProfiles WHERE user_id = ?", (user.id,)).fetchone()
+        data = self.database.execute("SELECT points, rank FROM UserProfiles WHERE user_id = ?", (user.id,)).fetchone()
         if data is None or data[0] == 0:
             error_embed = discord.Embed(
                 description="User must have atleast 1 point to view stats!",
@@ -24,10 +24,10 @@ class Checkstats(commands.Cog):
             return
         
         result_embed = discord.Embed(
-            description="**Points** | {}".format(data[0]),
+            description="**Points** | {}\n**Rank** | {}".format(data[0], data[1]),
             color=discord.Color.dark_red()
         )
-        await interaction.response.send_message(embed=result_embed())
+        await interaction.response.send_message(embed=result_embed)
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(Checkstats(bot))
