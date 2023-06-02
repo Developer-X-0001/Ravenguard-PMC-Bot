@@ -25,6 +25,6 @@ class PointsAddButton(View):
             data = database.execute("SELECT points FROM UserProfiles WHERE user_id = ?", (user.id,)).fetchone()
 
             current_points = 0 if data is None else data[0]
-            user_data_old += "{} **Username:** {} | **Old Points:** {} | **Updated Points:** {}".format(config.ARROW_EMOJI, user.mention, current_points, (int(current_points) + int(match[:-1])))
+            user_data_old += "{} **Username:** {} | **Old Points:** {} | **Updated Points:** {}\n".format(config.ARROW_EMOJI, user.mention, current_points, (int(current_points) + int(match[:-1])))
         
         await interaction.response.edit_message(embed=discord.Embed(title="User Data Update Confirmation", description=user_data_old, color=config.RAVEN_RED).set_footer(text="Do you want to make these changes?"), view=PointsConfirmButtons(message=self.original_message))

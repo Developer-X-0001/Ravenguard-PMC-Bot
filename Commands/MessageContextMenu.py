@@ -25,10 +25,11 @@ class MessageContextMenu(commands.Cog):
             await asyncio.sleep(1)
             await interaction.edit_original_response(embed=discord.Embed(description="{} Collecting data...".format(config.LOAD_EMOJI), color=config.RAVEN_RED))
             users = message.mentions
+            users.reverse()
             user_data = ""
             for match in matches:
                 user = users[matches.index(match)]
-                user_data += f"{config.ARROW_EMOJI} **Username:** {user.mention} | **Points:** {match}"
+                user_data += f"{config.ARROW_EMOJI} **Username:** {user.mention} | **Points:** {match}\n"
             await asyncio.sleep(2)
             await interaction.edit_original_response(embed=discord.Embed(description="{} Done!".format(config.DONE_EMOJI), color=config.RAVEN_RED))
             await asyncio.sleep(1)

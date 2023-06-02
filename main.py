@@ -25,6 +25,17 @@ class Bot(commands.Bot):
                 )
             '''
         ).close()
+
+        sqlite3.connect("./Databases/data.sqlite").execute(
+            '''
+                CREATE TABLE IF NOT EXISTS LogSettings (
+                    guild_id INTEGER,
+                    logs_channel INTEGER,
+                    status TEXT,
+                    Primary Key (guild_id)
+                )
+            '''
+        )
         for filename in os.listdir("./Commands"):
             if filename.endswith('.py'):
                 await self.load_extension('Commands.{}'.format(filename[:-3]))
