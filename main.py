@@ -36,6 +36,28 @@ class Bot(commands.Bot):
                 )
             '''
         )
+
+        sqlite3.connect("./Databases/deployments.sqlite").execute(
+            '''
+                CREATE TABLE IF NOT EXISTS Deployments (
+                    deployment_id TEXT,
+                    host_id INTEGER,
+                    cohost_id INTEGER,
+                    supervisor_id INTEGER,
+                    spawn TEXT,
+                    type TEXT,
+                    ping INTEGER,
+                    time INTEGER,
+                    code TEXT,
+                    team TEXT,
+                    comms INTEGER,
+                    notes TEXT,
+                    restrictions TEXT,
+                    Primary Key (deployment_id)
+                )
+            '''
+        )
+
         for filename in os.listdir("./Commands"):
             if filename.endswith('.py'):
                 await self.load_extension('Commands.{}'.format(filename[:-3]))
