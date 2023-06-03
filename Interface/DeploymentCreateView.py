@@ -386,3 +386,94 @@ class DeploymentCommsSelect(View):
 
         await interaction.response.edit_message(embed=deployment_embed, view=None)
         await interaction.edit_original_response()
+
+class DeploymentNotesView(View):
+    def __init__(self, code: str):
+        self.deployment_code = code
+        super().__init__(timeout=None)
+    
+    @button(label="Edit Note", emoji=config.EDIT_EMOJI, style=ButtonStyle.gray)
+    async def deployment_note_edit_button(self, interaction: discord.Interaction, button: Button):
+        await interaction.response.send_modal(DeploymentNotesModal(code=self.deployment_code))
+
+    @button(label="Skip", style=ButtonStyle.gray)
+    async def deployment_note_skip_button(self, interaction: discord.Interaction, button: Button):
+        deployment_embed = interaction.message.embeds[0]
+        deployment_embed.set_field_at(
+            index=10,
+            name="Notes:",
+            value="None",
+            inline=False
+        )
+        deployment_embed.add_field(
+            name="Restrictions:",
+            value="None",
+            inline=False
+        )
+        deployment_embed.set_footer(text="Please add deployment restrictions.")
+        database.execute("UPDATE Deployments SET notes = ? WHERE deployment_id = ?", ('None', self.deployment_code,)).connection.commit()
+
+        await interaction.response.edit_message(embed=deployment_embed, view=None)
+        await interaction.edit_original_response()
+
+class DeploymentNotesModal(Modal, title="Deployment Notes"):
+    def __init__(self, code: str):
+        self.deployment_code = code
+        super().__init__(timeout=None)
+
+        self.deployment_notes = TextInput(
+            label="Notes:",
+            style=TextStyle.long,
+            placeholder="Enter deployment notes...",
+            required=True
+        )
+
+        self.add_item(self.deployment_notes)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        deployment_embed = interaction.message.embeds[0]
+        deployment_embed.set_field_at(
+            index=10,
+            name="Notes:",
+            value=self.deployment_notes.value,
+            inline=False
+        )
+        deployment_embed.add_field(
+            name="Restrictions:",
+            value="None",
+            inline=False
+        )
+        deployment_embed.set_footer(text="Please add deployment restrictions.")
+        database.execute("UPDATE Deployments SET notes = ? WHERE deployment_id = ?", (self.deployment_notes.value, self.deployment_code,)).connection.commit()
+
+        await interaction.response.edit_message(embed=deployment_embed, view=None)
+        await interaction.edit_original_response(view=None)
+
+class DeploymentRestrictionsView(View):
+    def __init__(self, code: str):
+        self.deployment_code = code
+        super().__init__(timeout=None)
+    
+    @button(label="Edit Restrictions", emoji=config.EDIT_EMOJI, style=ButtonStyle.gray)
+    async def deployment_restrictions_edit_button(self, interaction: discord.Interaction, button: Button):
+        await interaction.response.send_modal(DeploymentNotesModal(code=self.deployment_code))
+
+    @button(label="Skip", style=ButtonStyle.gray)
+    async def deployment_restrictions_skip_button(self, interaction: discord.Interaction, button: Button):
+        deployment_embed = interaction.message.embeds[0]
+        deployment_embed.set_field_at(
+            index=11,
+            name="Restrictions:",
+            value="None",
+            inline=False
+        )
+        deployment_embed.add_field(
+            name="Restrictions:",
+            value="None",
+            inline=False
+        )
+        deployment_embed.set_footer(text="Please add deployment restrictions.")
+        database.execute("UPDATE Deployments SET notes = ? WHERE deployment_id = ?", ('None', self.deployment_code,)).connection.commit()
+
+        await interaction.response.edit_message(embed=deployment_embed, view=None)
+        await interaction.edit_original_response()
