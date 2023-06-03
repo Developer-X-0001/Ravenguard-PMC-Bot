@@ -19,7 +19,6 @@ class DeploymentStartView(View):
         deployment_code = generate_unique_code()
         deployment_embed = discord.Embed(
             title="Ravenguard Deployment",
-            description="Alright, let's start with the Host and Co-Host.",
             color=config.RAVEN_RED
         )
         deployment_embed.add_field(
@@ -88,6 +87,15 @@ class DeploymentCoHostViews(View):
         await interaction.response.edit_message(embed=deployment_embed, view=None)
         await interaction.edit_original_response(view=DeploymentSupervisorViews(code=self.deployment_code))
 
+    @button(label="Cancel", emoji=config.ERROR_EMOJI, style=ButtonStyle.gray)
+    async def deployment_cancel_button(self, interaction: discord.Interaction, button: Button):
+        deployment_embed = discord.Embed(
+            description="{} **Prompt Cancelled**".format(config.ERROR_EMOJI),
+            color=config.RAVEN_RED
+        )
+        database.execute("DELETE FROM Deployments WHERE deployment_id = ?", (self.deployment_code,)).connection.commit()
+        await interaction.response.edit_message(embed=deployment_embed, view=None)
+
 class DeploymentSupervisorViews(View):
     def __init__(self, code: str):
         self.deployment_code = code
@@ -132,11 +140,30 @@ class DeploymentSupervisorViews(View):
 
         await interaction.response.edit_message(embed=deployment_embed, view=None)
         await interaction.edit_original_response(view=DeploymentSpawnSelect(code=self.deployment_code))
+    
+    @button(label="Cancel", emoji=config.ERROR_EMOJI, style=ButtonStyle.gray)
+    async def deployment_cancel_button(self, interaction: discord.Interaction, button: Button):
+        deployment_embed = discord.Embed(
+            description="{} **Prompt Cancelled**".format(config.ERROR_EMOJI),
+            color=config.RAVEN_RED
+        )
+        database.execute("DELETE FROM Deployments WHERE deployment_id = ?", (self.deployment_code,)).connection.commit()
+        await interaction.response.edit_message(embed=deployment_embed, view=None)
 
 class DeploymentSpawnSelect(View):
     def __init__(self, code: str):
+        self.deployment_code = code
         super().__init__(timeout=None)
         self.add_item(SpawnSelector(code=code))
+
+    @button(label="Cancel", emoji=config.ERROR_EMOJI, style=ButtonStyle.gray, row=1)
+    async def deployment_cancel_button(self, interaction: discord.Interaction, button: Button):
+        deployment_embed = discord.Embed(
+            description="{} **Prompt Cancelled**".format(config.ERROR_EMOJI),
+            color=config.RAVEN_RED
+        )
+        database.execute("DELETE FROM Deployments WHERE deployment_id = ?", (self.deployment_code,)).connection.commit()
+        await interaction.response.edit_message(embed=deployment_embed, view=None)
 
 class SpawnSelector(Select):
     def __init__(self, code: str):
@@ -148,7 +175,7 @@ class SpawnSelector(Select):
             discord.SelectOption(label="Sochraina City", value="Sochraina City")
         ]
 
-        super().__init__(placeholder="Choose deployment spawn location...", min_values=1, max_values=1, options=spawn_locations)
+        super().__init__(placeholder="Choose deployment spawn location...", min_values=1, max_values=1, options=spawn_locations, row=0)
     
     async def callback(self, interaction: discord.Interaction):
         deployment_embed = interaction.message.embeds[0]
@@ -166,8 +193,7 @@ class SpawnSelector(Select):
         deployment_embed.set_footer(text="Please specify deployment type.")
         database.execute("UPDATE Deployments SET spawn = ? WHERE deployment_id = ?", (str(self.values[0]), self.deployment_code,)).connection.commit()
 
-        await interaction.response.edit_message(embed=deployment_embed, view=None)
-        await interaction.edit_original_response(view=DeploymentTypeButton(code=self.deployment_code))
+        await interaction.response.edit_message(embed=deployment_embed, view=DeploymentTypeButton(code=self.deployment_code))
     
 class DeploymentTypeButton(View):
     def __init__(self, code: str):
@@ -177,6 +203,15 @@ class DeploymentTypeButton(View):
     @button(label="Edit Deployment Type", emoji=config.EDIT_EMOJI, style=ButtonStyle.gray)
     async def deployment_type_edit_button(self, interaction: discord.Interaction, button: Button):
         await interaction.response.send_modal(DeploymentTypeModal(code=self.deployment_code))
+    
+    @button(label="Cancel", emoji=config.ERROR_EMOJI, style=ButtonStyle.gray)
+    async def deployment_cancel_button(self, interaction: discord.Interaction, button: Button):
+        deployment_embed = discord.Embed(
+            description="{} **Prompt Cancelled**".format(config.ERROR_EMOJI),
+            color=config.RAVEN_RED
+        )
+        database.execute("DELETE FROM Deployments WHERE deployment_id = ?", (self.deployment_code,)).connection.commit()
+        await interaction.response.edit_message(embed=deployment_embed, view=None)
 
 class DeploymentTypeModal(Modal, title="Deployment Type"):
     def __init__(self, code: str):
@@ -233,8 +268,16 @@ class DeploymentPingSelect(View):
         deployment_embed.set_footer(text="Please set a time, timestamp required.")
         database.execute("UPDATE Deployments SET ping = ? WHERE deployment_id = ?", (select.values[0].id, self.deployment_code,)).connection.commit()
 
+        await interaction.response.edit_message(embed=deployment_embed, view=DeploymentTimeButton(code=self.deployment_code))
+    
+    @button(label="Cancel", emoji=config.ERROR_EMOJI, style=ButtonStyle.gray)
+    async def deployment_cancel_button(self, interaction: discord.Interaction, button: Button):
+        deployment_embed = discord.Embed(
+            description="{} **Prompt Cancelled**".format(config.ERROR_EMOJI),
+            color=config.RAVEN_RED
+        )
+        database.execute("DELETE FROM Deployments WHERE deployment_id = ?", (self.deployment_code,)).connection.commit()
         await interaction.response.edit_message(embed=deployment_embed, view=None)
-        await interaction.edit_original_response(view=DeploymentTimeButton(code=self.deployment_code))
 
 class DeploymentTimeButton(View):
     def __init__(self, code: str):
@@ -244,6 +287,15 @@ class DeploymentTimeButton(View):
     @button(label="Edit Time", emoji=config.EDIT_EMOJI, style=ButtonStyle.gray)
     async def deployment_time_edit_button(self, interaction: discord.Interaction, button: Button):
         await interaction.response.send_modal(DeploymentTimeModal(code=self.deployment_code))
+    
+    @button(label="Cancel", emoji=config.ERROR_EMOJI, style=ButtonStyle.gray)
+    async def deployment_cancel_button(self, interaction: discord.Interaction, button: Button):
+        deployment_embed = discord.Embed(
+            description="{} **Prompt Cancelled**".format(config.ERROR_EMOJI),
+            color=config.RAVEN_RED
+        )
+        database.execute("DELETE FROM Deployments WHERE deployment_id = ?", (self.deployment_code,)).connection.commit()
+        await interaction.response.edit_message(embed=deployment_embed, view=None)
 
 class DeploymentTimeModal(Modal, title="Deployment Time"):
     def __init__(self, code: str):
@@ -278,8 +330,7 @@ class DeploymentTimeModal(Modal, title="Deployment Time"):
 
         database.execute("UPDATE Deployments SET time = ? WHERE deployment_id = ?", (int(self.deployment_time.value), self.deployment_code,)).connection.commit()
 
-        await interaction.response.edit_message(embed=deployment_embed, view=None)
-        await interaction.edit_original_response(view=DeploymentCodeButton(code=self.deployment_code))
+        await interaction.response.edit_message(embed=deployment_embed, view=DeploymentCodeButton(code=self.deployment_code))
 
 class DeploymentCodeButton(View):
     def __init__(self, code: str):
@@ -289,6 +340,15 @@ class DeploymentCodeButton(View):
     @button(label="Edit Server Code", emoji=config.EDIT_EMOJI, style=ButtonStyle.gray)
     async def deployment_code_edit_button(self, interaction: discord.Interaction, button: Button):
         await interaction.response.send_modal(DeploymentCodeModal(code=self.deployment_code))
+    
+    @button(label="Cancel", emoji=config.ERROR_EMOJI, style=ButtonStyle.gray)
+    async def deployment_cancel_button(self, interaction: discord.Interaction, button: Button):
+        deployment_embed = discord.Embed(
+            description="{} **Prompt Cancelled**".format(config.ERROR_EMOJI),
+            color=config.RAVEN_RED
+        )
+        database.execute("DELETE FROM Deployments WHERE deployment_id = ?", (self.deployment_code,)).connection.commit()
+        await interaction.response.edit_message(embed=deployment_embed, view=None)
 
 class DeploymentCodeModal(Modal, title="Deployment Server Code"):
     def __init__(self, code: str):
@@ -327,8 +387,18 @@ class DeploymentCodeModal(Modal, title="Deployment Server Code"):
 
 class DeploymentTeamSelect(View):
     def __init__(self, code: str):
+        self.deployment_code = code
         super().__init__(timeout=None)
         self.add_item(TeamSelector(code=code))
+    
+    @button(label="Cancel", emoji=config.ERROR_EMOJI, style=ButtonStyle.gray, row=1)
+    async def deployment_cancel_button(self, interaction: discord.Interaction, button: Button):
+        deployment_embed = discord.Embed(
+            description="{} **Prompt Cancelled**".format(config.ERROR_EMOJI),
+            color=config.RAVEN_RED
+        )
+        database.execute("DELETE FROM Deployments WHERE deployment_id = ?", (self.deployment_code,)).connection.commit()
+        await interaction.response.edit_message(embed=deployment_embed, view=None)
 
 class TeamSelector(Select):
     def __init__(self, code: str):
@@ -342,7 +412,7 @@ class TeamSelector(Select):
             discord.SelectOption(label="Red", emoji="🔴", description="Red team", value="red")
         ]
 
-        super().__init__(placeholder="Choose deployment team color...", min_values=1, max_values=1, options=team_colors)
+        super().__init__(placeholder="Choose deployment team color...", min_values=1, max_values=1, options=team_colors, row=0)
     
     async def callback(self, interaction: discord.Interaction):
         deployment_embed = interaction.message.embeds[0]
@@ -384,8 +454,16 @@ class DeploymentCommsSelect(View):
         deployment_embed.set_footer(text="Please add notes to the deployment. (Optional)")
         database.execute("UPDATE Deployments SET comms = ? WHERE deployment_id = ?", (select.values[0].id, self.deployment_code,)).connection.commit()
 
+        await interaction.response.edit_message(embed=deployment_embed, view=DeploymentNotesView(code=self.deployment_code))
+    
+    @button(label="Cancel", emoji=config.ERROR_EMOJI, style=ButtonStyle.gray)
+    async def deployment_cancel_button(self, interaction: discord.Interaction, button: Button):
+        deployment_embed = discord.Embed(
+            description="{} **Prompt Cancelled**".format(config.ERROR_EMOJI),
+            color=config.RAVEN_RED
+        )
+        database.execute("DELETE FROM Deployments WHERE deployment_id = ?", (self.deployment_code,)).connection.commit()
         await interaction.response.edit_message(embed=deployment_embed, view=None)
-        await interaction.edit_original_response()
 
 class DeploymentNotesView(View):
     def __init__(self, code: str):
@@ -413,8 +491,16 @@ class DeploymentNotesView(View):
         deployment_embed.set_footer(text="Please add deployment restrictions.")
         database.execute("UPDATE Deployments SET notes = ? WHERE deployment_id = ?", ('None', self.deployment_code,)).connection.commit()
 
+        await interaction.response.edit_message(embed=deployment_embed, view=DeploymentRestrictionsView(code=self.deployment_code))
+    
+    @button(label="Cancel", emoji=config.ERROR_EMOJI, style=ButtonStyle.gray)
+    async def deployment_cancel_button(self, interaction: discord.Interaction, button: Button):
+        deployment_embed = discord.Embed(
+            description="{} **Prompt Cancelled**".format(config.ERROR_EMOJI),
+            color=config.RAVEN_RED
+        )
+        database.execute("DELETE FROM Deployments WHERE deployment_id = ?", (self.deployment_code,)).connection.commit()
         await interaction.response.edit_message(embed=deployment_embed, view=None)
-        await interaction.edit_original_response()
 
 class DeploymentNotesModal(Modal, title="Deployment Notes"):
     def __init__(self, code: str):
@@ -446,8 +532,7 @@ class DeploymentNotesModal(Modal, title="Deployment Notes"):
         deployment_embed.set_footer(text="Please add deployment restrictions.")
         database.execute("UPDATE Deployments SET notes = ? WHERE deployment_id = ?", (self.deployment_notes.value, self.deployment_code,)).connection.commit()
 
-        await interaction.response.edit_message(embed=deployment_embed, view=None)
-        await interaction.edit_original_response(view=None)
+        await interaction.response.edit_message(embed=deployment_embed, view=DeploymentRestrictionsView(code=self.deployment_code))
 
 class DeploymentRestrictionsView(View):
     def __init__(self, code: str):
@@ -475,5 +560,64 @@ class DeploymentRestrictionsView(View):
         deployment_embed.set_footer(text="Please add deployment restrictions.")
         database.execute("UPDATE Deployments SET notes = ? WHERE deployment_id = ?", ('None', self.deployment_code,)).connection.commit()
 
+        await interaction.response.edit_message(embed=deployment_embed, view=DeploymentCreateFinalView(code=self.deployment_code))
+    
+    @button(label="Cancel", emoji=config.ERROR_EMOJI, style=ButtonStyle.gray)
+    async def deployment_cancel_button(self, interaction: discord.Interaction, button: Button):
+        deployment_embed = discord.Embed(
+            description="{} **Prompt Cancelled**".format(config.ERROR_EMOJI),
+            color=config.RAVEN_RED
+        )
+        database.execute("DELETE FROM Deployments WHERE deployment_id = ?", (self.deployment_code,)).connection.commit()
         await interaction.response.edit_message(embed=deployment_embed, view=None)
-        await interaction.edit_original_response()
+
+class DeploymentCreateFinalView(View):
+    def __init__(self, code: str):
+        self.deployment_code = code
+        super().__init__(timeout=None)
+    
+    @button(label="Save", emoji=config.SAVE_EMOJI, style=ButtonStyle.gray)
+    async def deployment_save_button(self, interaction: discord.Interaction, button: Button):
+        deployment_embed = discord.Embed(
+            description="{} **Deployment Saved**\n**Deployment ID:** `{}`".format(config.SAVE_EMOJI, self.deployment_code),
+            color=config.RAVEN_RED
+        )
+        self.deployment_save_button.disabled = True
+        self.deployment_delete_button.disabled = True
+        self.deployment_send_button.disabled = True
+
+        self.deployment_save_button.style = ButtonStyle.red
+
+        await interaction.response.edit_message(embed=deployment_embed, view=self)
+
+    @button(label="Delete", emoji=config.DELETE_EMOJI, style=ButtonStyle.gray)
+    async def deployment_delete_button(self, interaction: discord.Interaction, button: Button):
+        deployment_embed = discord.Embed(
+            description="{} **Deployment Deleted**".format(config.DELETE_EMOJI),
+            color=config.RAVEN_RED
+        )
+        self.deployment_save_button.disabled = True
+        self.deployment_delete_button.disabled = True
+        self.deployment_send_button.disabled = True
+
+        self.deployment_delete_button.style = ButtonStyle.red
+
+        await interaction.response.edit_message(embed=deployment_embed, view=self)
+
+    @button(label="Send", emoji=config.SEND_EMOJI, style=ButtonStyle.gray)
+    async def deployment_send_button(self, interaction: discord.Interaction, button: Button):
+        deployment_channel = interaction.guild.get_channel(config.DEPLOYMENT_CHANNEL_ID)
+        deployment_embed = discord.Embed(
+            description="**Deployment Sent**\n**Deployment ID:** `{}`\n**Deployment Channel:** {}".format(self.deployment_code, deployment_channel.mention),
+            color=config.RAVEN_RED
+        )
+        self.deployment_save_button.disabled = True
+        self.deployment_delete_button.disabled = True
+        self.deployment_send_button.disabled = True
+
+        self.deployment_send_button.style = ButtonStyle.red
+
+        data = database.execute("SELECT ping FROM Deployments WHERE deployment_id = ?", (self.deployment_code,)).fetchone()
+        ping_role = interaction.guild.get_role(data[0])
+        await deployment_channel.send(embed=interaction.message.embeds[0], content=ping_role.mention)
+        await interaction.response.edit_message(embed=deployment_embed, view=self)
