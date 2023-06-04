@@ -6,6 +6,7 @@ import datetime
 from discord.ext import commands
 from discord import ButtonStyle, TextStyle
 from Functions.GenerateCode import generate_unique_code
+from Interface.DeploymentButtons import DeploymentButtons
 from discord.ui import button, Button, View, select, Select, UserSelect, RoleSelect, TextInput, Modal, RoleSelect, ChannelSelect
 
 database = sqlite3.connect("./Databases/deployments.sqlite")
@@ -541,7 +542,7 @@ class DeploymentRestrictionsView(View):
     
     @button(label="Edit Restrictions", emoji=config.EDIT_EMOJI, style=ButtonStyle.gray)
     async def deployment_restrictions_edit_button(self, interaction: discord.Interaction, button: Button):
-        await interaction.response.send_modal(DeploymentNotesModal(code=self.deployment_code))
+        await interaction.response.send_modal(DeploymentRestrictionsModal(code=self.deployment_code))
 
     @button(label="Skip", style=ButtonStyle.gray)
     async def deployment_restrictions_skip_button(self, interaction: discord.Interaction, button: Button):
@@ -571,6 +572,33 @@ class DeploymentRestrictionsView(View):
         database.execute("DELETE FROM Deployments WHERE deployment_id = ?", (self.deployment_code,)).connection.commit()
         await interaction.response.edit_message(embed=deployment_embed, view=None)
 
+class DeploymentRestrictionsModal(Modal, title="Deployment Restricions"):
+    def __init__(self, code: str):
+        self.deployment_code = code
+        super().__init__(timeout=None)
+
+        self.deployment_restrictions = TextInput(
+            label="Restricions:",
+            style=TextStyle.long,
+            placeholder="Enter deployment restricions...",
+            required=True
+        )
+
+        self.add_item(self.deployment_restrictions)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        deployment_embed = interaction.message.embeds[0]
+        deployment_embed.set_field_at(
+            index=11,
+            name="Restrictions:",
+            value=self.deployment_restrictions.value,
+            inline=False
+        )
+        deployment_embed.footer.text = None
+        database.execute("UPDATE Deployments SET notes = ? WHERE deployment_id = ?", (self.deployment_restrictions.value, self.deployment_code,)).connection.commit()
+
+        await interaction.response.edit_message(embed=deployment_embed, view=DeploymentCreateFinalView(code=self.deployment_code))
+
 class DeploymentCreateFinalView(View):
     def __init__(self, code: str):
         self.deployment_code = code
@@ -587,6 +615,7 @@ class DeploymentCreateFinalView(View):
         self.deployment_send_button.disabled = True
 
         self.deployment_save_button.style = ButtonStyle.red
+        self.deployment_save_button.label = "Saved"
 
         await interaction.response.edit_message(embed=deployment_embed, view=self)
 
@@ -601,7 +630,9 @@ class DeploymentCreateFinalView(View):
         self.deployment_send_button.disabled = True
 
         self.deployment_delete_button.style = ButtonStyle.red
+        self.deployment_delete_button.label = "Deleted"
 
+        database.execute("DELETE FROM Deployments WHERE deployment_id = ?", (self.deployment_code,)).connection.commit()
         await interaction.response.edit_message(embed=deployment_embed, view=self)
 
     @button(label="Send", emoji=config.SEND_EMOJI, style=ButtonStyle.gray)
@@ -616,8 +647,9 @@ class DeploymentCreateFinalView(View):
         self.deployment_send_button.disabled = True
 
         self.deployment_send_button.style = ButtonStyle.red
+        self.deployment_send_button.label = "Sent"
 
         data = database.execute("SELECT ping FROM Deployments WHERE deployment_id = ?", (self.deployment_code,)).fetchone()
         ping_role = interaction.guild.get_role(data[0])
-        await deployment_channel.send(embed=interaction.message.embeds[0], content=ping_role.mention)
+        await deployment_channel.send(embed=interaction.message.embeds[0], content=ping_role.mention, view=DeploymentButtons())
         await interaction.response.edit_message(embed=deployment_embed, view=self)

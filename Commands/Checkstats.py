@@ -1,8 +1,12 @@
+import re
 import config
 import sqlite3
 import discord
+
 from discord.ext import commands
 from discord import app_commands
+from Functions.SquadCodeConverter import squad_code_to_squad_name
+from Functions.ColorConverter import hex_to_int
 
 class Checkstats(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -14,20 +18,147 @@ class Checkstats(commands.Cog):
         if user is None:
             user = interaction.user
 
-        data = self.database.execute("SELECT points, rank FROM UserProfiles WHERE user_id = ?", (user.id,)).fetchone()
-        if data is None or data[0] == 0:
-            error_embed = discord.Embed(
-                description="User must have atleast 1 point to view stats!",
-                color=discord.Color.red()
-            )
-            await interaction.response.send_message(embed=error_embed)
-            return
+        data = self.database.execute("SELECT bio, color, callsign, rank, paygrade, squad, points FROM UserProfiles WHERE user_id = ?", (user.id,)).fetchone()
+
+        if data is None:
+            if user.nick:
+                pattern = r'\[(\w+)-(\w+)\] (\w+)'
+
+                match = re.match(pattern, user.nick)
+                if match:
+                    paygrade = match.group(1)
+                    squad_code = match.group(2)
+                    callsign = match.group(3)
+                    self.database.execute(
+                        '''
+                            INSERT INTO UserProfiles VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                        ''',
+                        (
+                            user.id,
+                            'None',
+                            hex_to_int(hex_code='FFFFFF'),
+                            callsign,
+                            config.RANKS[paygrade]["name"],
+                            paygrade,
+                            squad_code,
+                            0
+                        )
+                    ).connection.commit()
+                    data = self.database.execute("SELECT bio, color, callsign, rank, paygrade, squad, points FROM UserProfiles WHERE user_id = ?", (user.id,)).fetchone()
         
-        result_embed = discord.Embed(
-            description="**Points** | {}\n**Rank** | {}".format(data[0], data[1]),
-            color=discord.Color.dark_red()
+        if data is not None:
+            if user.nick:
+                pattern = r'\[(\w+)-(\w+)\] (\w+)'
+
+                match = re.match(pattern, user.nick)
+                if match:
+                    paygrade = match.group(1)
+                    squad_code = match.group(2)
+                    callsign = match.group(3)
+                    self.database.execute(
+                        '''
+                            UPDATE UserProfiles SET 
+                                callsign = ?,
+                                rank = ?,
+                                paygrade = ?,
+                                squad = ?
+                            WHERE user_id = ?
+                        ''',
+                        (
+                            callsign,
+                            config.RANKS[paygrade]["name"],
+                            paygrade,
+                            squad_code,
+                            user.id,
+                        )
+                    ).connection.commit()
+                    data = self.database.execute("SELECT bio, color, callsign, rank, paygrade, squad, points FROM UserProfiles WHERE user_id = ?", (user.id,)).fetchone()
+
+        user_database = sqlite3.connect("./Databases/UserData/{}.sqlite".format(user.id)).execute(
+            '''
+                CREATE TABLE IF NOT EXISTS Medals (
+                    name TEXT,
+                    emoji TEXT,
+                    Primary Key (name)
+                )
+            '''
+        ).execute(
+            '''
+                CREATE TABLE IF NOT EXISTS Ribbons (
+                    name TEXT,
+                    emoji TEXT,
+                    Primary Key (name)
+                )
+            '''
         )
-        await interaction.response.send_message(embed=result_embed)
+
+        medals = ""
+        medals_data = user_database.execute("SELECT emoji FROM Medals").fetchall()
+        for medal in medals_data:
+            medals += medal[0]
+
+        ribbons = ""
+        ribbons_data = user_database.execute("SELECT emoji FROM Ribbons").fetchall()
+        for ribbon in ribbons_data:
+            ribbons += ribbon[0]
+        
+        profile_embed = discord.Embed(
+            title="{}'s Profile".format(user.name),
+            description="Bio not set" if data[0] is None else data[0],
+            color=config.RAVEN_RED if data[1] is None else data[1]
+        )
+        profile_embed.add_field(
+            name="Username:",
+            value=user.name,
+            inline=False
+        )
+        profile_embed.add_field(
+            name="Display Name:",
+            value="None" if not user.nick else user.nick,
+            inline=False
+        )
+        profile_embed.add_field(
+            name="Rank:",
+            value=data[3],
+            inline=False
+        )
+        profile_embed.add_field(
+            name="Callsign:",
+            value=data[2],
+            inline=True
+        )
+        profile_embed.add_field(
+            name="Paygrade:",
+            value=data[4],
+            inline=True
+        )
+        profile_embed.add_field(
+            name="Squad:",
+            value="None" if data[5] == '00' else data[5]
+        )
+        profile_embed.add_field(
+            name="Points",
+            value=data[6],
+            inline=True
+        )
+        profile_embed.add_field(
+            name="Joining Date:",
+            value="<t:{}:D>".format(round(user.joined_at.timestamp())),
+            inline=True
+        )
+        profile_embed.add_field(
+            name="Medals:",
+            value="None" if medals == "" else medals,
+            inline=False
+        )
+        profile_embed.add_field(
+            name="Ribbons:",
+            value="None" if ribbons == "" else ribbons,
+            inline=False
+        )
+        profile_embed.set_thumbnail(url=config.RANKS[data[4]]['url'])
+        profile_embed.set_image(url=user.display_avatar.url)
+        await interaction.response.send_message(embed=profile_embed)
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(Checkstats(bot))

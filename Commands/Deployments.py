@@ -5,6 +5,7 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 from Interface.DeploymentCreateView import DeploymentStartView
+from Interface.DeploymentLoadView import DeploymentSelectView
 
 class Deployments(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -21,6 +22,16 @@ class Deployments(commands.Cog):
         )
 
         await interaction.response.send_message(embed=deployment_embed, view=DeploymentStartView())
+    
+    @deployments_group.command(name="load", description="Load a previously created deployment.")
+    async def deploy_load(self, interaction: discord.Interaction):
+        response_embed = discord.Embed(
+            title="Deployment Selector",
+            description="Please select a previously created a deployment.",
+            color=config.RAVEN_RED
+        )
+
+        await interaction.response.send_message(embed=response_embed, view=DeploymentSelectView(guild=interaction.guild))
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(Deployments(bot))

@@ -38,7 +38,5 @@ class MessageContextMenu(commands.Cog):
         else:
             await interaction.edit_original_response(embed=discord.Embed(description="{} Unable to find user mentions & points!".format(config.ERROR_EMOJI), color=config.RAVEN_RED))
 
-    
-
 async def setup(bot: commands.Bot):
     await bot.add_cog(MessageContextMenu(bot))

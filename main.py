@@ -2,7 +2,9 @@ import os
 import config
 import sqlite3
 import discord
+
 from discord.ext import commands
+from Interface.DeploymentButtons import DeploymentButtons
 
 intents = discord.Intents.all()
 
@@ -19,8 +21,13 @@ class Bot(commands.Bot):
             '''
                 CREATE TABLE IF NOT EXISTS UserProfiles (
                     user_id INTEGER,
-                    points INTEGER,
+                    bio TEXT,
+                    color INTEGER,
+                    callsign TEXT,
                     rank TEXT,
+                    paygrade TEXT,
+                    squad TEXT,
+                    points INTEGER,
                     Primary Key (user_id)
                 )
             '''
@@ -57,6 +64,25 @@ class Bot(commands.Bot):
                 )
             '''
         )
+
+        sqlite3.connect("./Databases/squads.sqlite").execute(
+            '''
+                CREATE TABLE IF NOT EXISTS Squads (
+                    code TEXT,
+                    name TEXT,
+                    role_id INTEGER,
+                    description TEXT,
+                    purpose TEXT,
+                    team_lead_id INTEGER,
+                    timezone TEXT,
+                    color TEXT,
+                    icon TEXT,
+                    Primary Key (code)
+                )
+            '''
+        )
+
+        self.add_view(DeploymentButtons())
 
         for filename in os.listdir("./Commands"):
             if filename.endswith('.py'):
