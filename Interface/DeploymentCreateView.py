@@ -32,6 +32,7 @@ class DeploymentStartView(View):
             value="None",
             inline=False
         )
+        deployment_embed.set_thumbnail(url=config.RAVEN_ICON)
         deployment_embed.set_footer(text="Please select the Co-Host (Optional)")
 
         database.execute("INSERT INTO Deployments VALUES (?, ?, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)", (deployment_code, interaction.user.id,)).connection.commit()

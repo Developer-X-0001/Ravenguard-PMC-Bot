@@ -83,6 +83,11 @@ class PointsConfirmButtons(View):
                     color=config.RAVEN_RED
                 )
                 logs_embed.add_field(
+                    name="Action Type:",
+                    value="Batch Update",
+                    inline=False
+                )
+                logs_embed.add_field(
                     name="Points Given By:",
                     value=interaction.user.mention,
                     inline=False

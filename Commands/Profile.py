@@ -8,15 +8,19 @@ from discord import app_commands
 from Functions.SquadCodeConverter import squad_code_to_squad_name
 from Functions.ColorConverter import hex_to_int
 
-class Checkstats(commands.Cog):
+class Profile(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.database = sqlite3.connect("./Databases/profiles.sqlite")
 
-    @app_commands.command(name="checkstats", description="Check your\'s or someone else\'s total points.")
-    async def check_stats(self, interaction: discord.Interaction, user: discord.Member=None):
+    @app_commands.command(name="profile", description="Check your\'s or someone else\'s profile.")
+    async def user_profile(self, interaction: discord.Interaction, user: discord.Member=None):
         if user is None:
             user = interaction.user
+        
+        if user.bot:
+            await interaction.response.send_message(embed=discord.Embed(description="{} You can't check on Bots!".format(config.ERROR_EMOJI), color=config.RAVEN_RED), ephemeral=True)
+            return
 
         data = self.database.execute("SELECT bio, color, callsign, rank, paygrade, squad, points FROM UserProfiles WHERE user_id = ?", (user.id,)).fetchone()
 
@@ -161,4 +165,4 @@ class Checkstats(commands.Cog):
         await interaction.response.send_message(embed=profile_embed)
 
 async def setup(bot: commands.Bot):
-    await bot.add_cog(Checkstats(bot))
+    await bot.add_cog(Profile(bot))
