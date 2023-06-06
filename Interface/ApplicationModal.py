@@ -4,6 +4,7 @@ import datetime
 
 from discord import TextStyle
 from discord.ui import Modal, TextInput
+from Interface.ApplicationButtons import ApplicationButtons
 
 class ApplicationModal(Modal, title="Ravenguard PMC Application Form"):
     def __init__(self):
@@ -50,27 +51,35 @@ class ApplicationModal(Modal, title="Ravenguard PMC Application Form"):
             timestamp=datetime.datetime.now()
         )
         application_embed.add_field(
-            name="What server or member you joined from?",
-            value=self.question_one.value,
+            name="**__Applicant Details:__**",
+            value="**Username (ID):** {} ({})\n**Joined At:** <t:{joined_at}:D> (<t:{joined_at}:R>)\n**Created At:** <t:{created_at}:D> (<t:{created_at}:R>)".format(
+                interaction.user.name, interaction.user.id, joined_at=round(interaction.user.joined_at.timestamp()), created_at=round(interaction.user.created_at.timestamp())
+            ),
             inline=False
         )
         application_embed.add_field(
-            name="Desired Callsign?",
-            value=self.question_two.value,
+            name="{} What server or member you joined from?".format(config.ARROW_EMOJI),
+            value=f"> {self.question_one.value}",
             inline=False
         )
         application_embed.add_field(
-            name="Your Playstyle?",
-            value=self.question_three.value,
+            name="{} Desired Callsign?".format(config.ARROW_EMOJI),
+            value=f"> {self.question_two.value}",
             inline=False
         )
         application_embed.add_field(
-            name="Timezone?",
-            value=self.question_four.value,
+            name="{} Your Playstyle?".format(config.ARROW_EMOJI),
+            value=f"> {self.question_three.value}",
             inline=False
         )
+        application_embed.add_field(
+            name="{} Timezone?".format(config.ARROW_EMOJI),
+            value=f"> {self.question_four.value}",
+            inline=False
+        )
+        application_embed.set_thumbnail(url=config.RAVEN_ICON)
 
         application_channel = interaction.guild.get_channel(1112039475942543431)
 
-        msg = await application_channel.send(content=interaction.user.mention, embed=application_embed)
+        msg = await application_channel.send(content=interaction.user.mention, embed=application_embed, view=ApplicationButtons())
         await interaction.response.send_message(content="Thanks for applying!\nYou can see your submitted application here: {}".format(msg.jump_url), ephemeral=True)

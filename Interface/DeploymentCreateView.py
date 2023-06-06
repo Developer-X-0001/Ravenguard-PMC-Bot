@@ -1,3 +1,4 @@
+import re
 import config
 import sqlite3
 import discord
@@ -369,23 +370,29 @@ class DeploymentCodeModal(Modal, title="Deployment Server Code"):
         self.add_item(self.deployment_server_code)
 
     async def on_submit(self, interaction: discord.Interaction):
-        deployment_embed = interaction.message.embeds[0]
-        deployment_embed.set_field_at(
-            index=7,
-            name="Code:",
-            value=self.deployment_server_code.value,
-            inline=False
-        )
-        deployment_embed.add_field(
-            name="Team:",
-            value="None",
-            inline=False
-        )
-        deployment_embed.set_footer(text="Please choose the team for deployment.")
-        database.execute("UPDATE Deployments SET code = ? WHERE deployment_id = ?", (self.deployment_server_code.value, self.deployment_code,)).connection.commit()
+        pattern = r'^[A-Za-z0-9]{8}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{12}$'
 
-        await interaction.response.edit_message(embed=deployment_embed, view=None)
-        await interaction.edit_original_response(view=DeploymentTeamSelect(code=self.deployment_code))
+        match = re.match(pattern, self.deployment_server_code.value)
+        if match:
+            deployment_embed = interaction.message.embeds[0]
+            deployment_embed.set_field_at(
+                index=7,
+                name="Code:",
+                value=self.deployment_server_code.value,
+                inline=False
+            )
+            deployment_embed.add_field(
+                name="Team:",
+                value="None",
+                inline=False
+            )
+            deployment_embed.set_footer(text="Please choose the team for deployment.")
+            database.execute("UPDATE Deployments SET code = ? WHERE deployment_id = ?", (self.deployment_server_code.value, self.deployment_code,)).connection.commit()
+
+            await interaction.response.edit_message(embed=deployment_embed, view=None)
+            await interaction.edit_original_response(view=DeploymentTeamSelect(code=self.deployment_code))
+        else:
+            await interaction.response.send_message(embed=discord.Embed(description="{} **Invalid Code Format!**\n```\nXXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX\n```".format(config.WARN_EMOJI), color=config.RAVEN_RED), ephemeral=True)
 
 class DeploymentTeamSelect(View):
     def __init__(self, code: str):
@@ -652,5 +659,27 @@ class DeploymentCreateFinalView(View):
 
         data = database.execute("SELECT ping FROM Deployments WHERE deployment_id = ?", (self.deployment_code,)).fetchone()
         ping_role = interaction.guild.get_role(data[0])
-        await deployment_channel.send(embed=interaction.message.embeds[0], content=ping_role.mention, view=DeploymentButtons())
+        await deployment_channel.send(embed=interaction.message.embeds[0].set_footer(text=self.deployment_code), content=ping_role.mention, view=DeploymentButtons())
+        sqlite3.connect("./Databases/Deployments/{}.sqlite".format(self.deployment_code)).execute(
+            '''
+                CREATE TABLE IF NOT EXISTS Joining (
+                    user_id INTEGER,
+                    Primary Key (user_id)
+                )
+            '''
+        ).execute(
+            '''
+                CREATE TABLE IF NOT EXISTS Maybe (
+                    user_id INTEGER,
+                    Primary Key (user_id)
+                )
+            '''
+        ).execute(
+            '''
+                CREATE TABLE IF NOT EXISTS NotJoining (
+                    user_id INTEGER,
+                    Primary Key (user_id)
+                )
+            '''
+        ).connection.commit()
         await interaction.response.edit_message(embed=deployment_embed, view=self)

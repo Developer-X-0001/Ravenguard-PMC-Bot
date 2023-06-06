@@ -1,9 +1,11 @@
+import re
 import config
 import sqlite3
 import discord
 import datetime
 
 from discord import ButtonStyle, TextStyle
+from Interface.DeploymentButtons import DeploymentButtons
 from discord.ui import View, Modal, TextInput, Button, Select, ChannelSelect, UserSelect, RoleSelect, button, select
 
 database = sqlite3.connect("./Databases/deployments.sqlite")
@@ -290,16 +292,22 @@ class DeploymentCodeModal(Modal, title="Deployment Server Code"):
         self.add_item(self.deployment_server_code)
 
     async def on_submit(self, interaction: discord.Interaction):
-        deployment_embed = interaction.message.embeds[0]
-        deployment_embed.set_field_at(
-            index=7,
-            name="Code:",
-            value=self.deployment_server_code.value,
-            inline=False
-        )
-        database.execute("UPDATE Deployments SET code = ? WHERE deployment_id = ?", (self.deployment_server_code.value, self.deployment_code,)).connection.commit()
+        pattern = r'^[A-Za-z0-9]{8}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{12}$'
 
-        await interaction.response.edit_message(embed=deployment_embed)
+        match = re.match(pattern, self.deployment_server_code.value)
+        if match:
+            deployment_embed = interaction.message.embeds[0]
+            deployment_embed.set_field_at(
+                index=7,
+                name="Code:",
+                value=self.deployment_server_code.value,
+                inline=False
+            )
+            database.execute("UPDATE Deployments SET code = ? WHERE deployment_id = ?", (self.deployment_server_code.value, self.deployment_code,)).connection.commit()
+
+            await interaction.response.edit_message(embed=deployment_embed)
+        else:
+            await interaction.response.send_message(embed=discord.Embed(description="{} **Invalid Code Format!**\n```\nXXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX\n```".format(config.WARN_EMOJI), color=config.RAVEN_RED), ephemeral=True)
 
 class DeploymentNotesModal(Modal, title="Deployment Notes"):
     def __init__(self, code: str):
@@ -358,6 +366,22 @@ class DeploymentLoadView(View):
         self.deployment_code = code
         super().__init__(timeout=None)
 
+    @button(label="Save", emoji=config.SAVE_EMOJI, style=ButtonStyle.gray)
+    async def deployment_save_button(self, interaction: discord.Interaction, button: Button):
+        deployment_embed = discord.Embed(
+            description="{} **Deployment Saved**\n**Deployment ID:** `{}`".format(config.SAVE_EMOJI, self.deployment_code),
+            color=config.RAVEN_RED
+        )
+        self.deployment_save_button.disabled = True
+        self.deployment_delete_button.disabled = True
+        self.deployment_send_button.disabled = True
+        self.deployment_edit_button.disabled = True
+
+        self.deployment_save_button.style = ButtonStyle.red
+        self.deployment_save_button.label = "Saved"
+
+        await interaction.response.edit_message(embed=deployment_embed, view=self)
+
     @button(label="Send", emoji=config.SEND_EMOJI, style=ButtonStyle.gray)
     async def deployment_send_button(self, interaction: discord.Interaction, button: Button):
         deployment_channel = interaction.guild.get_channel(config.DEPLOYMENT_CHANNEL_ID)
@@ -368,13 +392,36 @@ class DeploymentLoadView(View):
         self.deployment_delete_button.disabled = True
         self.deployment_send_button.disabled = True
         self.deployment_edit_button.disabled = True
+        self.deployment_save_button.disabled = True
 
         self.deployment_send_button.style = ButtonStyle.red
         self.deployment_send_button.label = "Sent"
 
         data = database.execute("SELECT ping FROM Deployments WHERE deployment_id = ?", (self.deployment_code,)).fetchone()
         ping_role = interaction.guild.get_role(data[0])
-        await deployment_channel.send(embed=interaction.message.embeds[0], content=ping_role.mention)
+        await deployment_channel.send(embed=interaction.message.embeds[0].set_footer(text=self.deployment_code), content=ping_role.mention, view=DeploymentButtons())
+        sqlite3.connect("./Databases/Deployments/{}.sqlite".format(self.deployment_code)).execute(
+            '''
+                CREATE TABLE IF NOT EXISTS Joining (
+                    user_id INTEGER,
+                    Primary Key (user_id)
+                )
+            '''
+        ).execute(
+            '''
+                CREATE TABLE IF NOT EXISTS Maybe (
+                    user_id INTEGER,
+                    Primary Key (user_id)
+                )
+            '''
+        ).execute(
+            '''
+                CREATE TABLE IF NOT EXISTS NotJoining (
+                    user_id INTEGER,
+                    Primary Key (user_id)
+                )
+            '''
+        ).connection.commit()
         await interaction.response.edit_message(embed=deployment_embed, view=self)
 
     @button(label="Edit", emoji=config.EDIT_EMOJI, style=ButtonStyle.gray)
@@ -390,6 +437,7 @@ class DeploymentLoadView(View):
         )
         self.deployment_delete_button.disabled = True
         self.deployment_send_button.disabled = True
+        self.deployment_save_button.disabled = True
         self.deployment_edit_button.disabled = True
 
         self.deployment_delete_button.style = ButtonStyle.red

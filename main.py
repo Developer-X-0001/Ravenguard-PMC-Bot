@@ -5,6 +5,7 @@ import discord
 
 from discord.ext import commands
 from Interface.DeploymentButtons import DeploymentButtons
+from Interface.ApplicationButtons import ApplicationButtons
 
 intents = discord.Intents.all()
 
@@ -60,6 +61,8 @@ class Bot(commands.Bot):
                     comms INTEGER,
                     notes TEXT,
                     restrictions TEXT,
+                    started_at INTEGER,
+                    ended_at INTEGER,
                     Primary Key (deployment_id)
                 )
             '''
@@ -83,6 +86,7 @@ class Bot(commands.Bot):
         )
 
         self.add_view(DeploymentButtons())
+        self.add_view(ApplicationButtons())
 
         for filename in os.listdir("./Commands"):
             if filename.endswith('.py'):
