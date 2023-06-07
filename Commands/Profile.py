@@ -39,7 +39,7 @@ class Profile(commands.Cog):
                         ''',
                         (
                             user.id,
-                            'None',
+                            'Bio and embed color isn\'t configurable yet.',
                             hex_to_int(hex_code='FFFFFF'),
                             callsign,
                             config.RANKS[paygrade]["name"],
@@ -59,6 +59,9 @@ class Profile(commands.Cog):
                     paygrade = match.group(1)
                     squad_code = match.group(2)
                     callsign = match.group(3)
+                    print(paygrade)
+                    print(squad_code)
+                    print(callsign)
                     self.database.execute(
                         '''
                             UPDATE UserProfiles SET 
@@ -161,7 +164,7 @@ class Profile(commands.Cog):
             inline=False
         )
         profile_embed.set_thumbnail(url=config.RANKS[data[4]]['url'])
-        profile_embed.set_image(url=user.display_avatar.url)
+        profile_embed.set_author(name=user.name, icon_url=user.display_avatar.url)
         await interaction.response.send_message(embed=profile_embed)
 
 async def setup(bot: commands.Bot):

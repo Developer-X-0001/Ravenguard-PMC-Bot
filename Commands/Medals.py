@@ -18,7 +18,7 @@ class Medals(commands.Cog):
             colour=config.RAVEN_RED
         )
 
-        await interaction.response.send_message(embed=medal_embed, view=MedalsSelectView())
+        await interaction.response.send_message(embed=medal_embed, view=MedalsSelectView(), ephemeral=True)
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(Medals(bot))

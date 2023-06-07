@@ -49,7 +49,7 @@ class UserContextMenu(commands.Cog):
                         ''',
                         (
                             user.id,
-                            'None',
+                            'Bio and embed color isn\'t configurable yet.',
                             hex_to_int(hex_code='FFFFFF'),
                             callsign,
                             config.RANKS[paygrade]["name"],

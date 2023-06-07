@@ -79,7 +79,7 @@ class ApplicationModal(Modal, title="Ravenguard PMC Application Form"):
         )
         application_embed.set_thumbnail(url=config.RAVEN_ICON)
 
-        application_channel = interaction.guild.get_channel(1112039475942543431)
+        application_channel = interaction.guild.get_channel(config.APPLICATION_CHANNEL_ID)
 
         msg = await application_channel.send(content=interaction.user.mention, embed=application_embed, view=ApplicationButtons())
         await interaction.response.send_message(content="Thanks for applying!\nYou can see your submitted application here: {}".format(msg.jump_url), ephemeral=True)
