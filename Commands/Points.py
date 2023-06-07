@@ -15,6 +15,7 @@ class Points(commands.Cog):
         self.bot = bot
 
     @app_commands.command(name="addpoints", description="Add points to a user.")
+    @app_commands.checks.has_role(config.BOT_OPERATOR_ROLE_ID)
     async def add_points(self, interaction: discord.Interaction, amount: int, users: str):
         pattern = r'<@(\d+)>'
 
@@ -57,8 +58,17 @@ class Points(commands.Cog):
             color=config.RAVEN_RED
         )
         await interaction.response.send_message(embed=points_embed)
+    
+    @add_points.error
+    async def app_points_error(self, interaction: discord.Interaction, error: app_commands.errors):
+        if isinstance(error, app_commands.errors.MissingRole):
+            await interaction.response.send_message(embed=discord.Embed(description="{} **You aren't authorized to do that!**".format(config.ERROR_EMOJI), color=config.RAVEN_RED), ephemeral=True)
+        else:
+            raise Exception
+
 
     @app_commands.command(name="removepoints", description="Remove points from users.")
+    @app_commands.checks.has_role(config.BOT_OPERATOR_ROLE_ID)
     async def remove_points(self, interaction: discord.Interaction, amount: int, users: str):
         pattern = r'<@(\d+)>'
 
@@ -101,6 +111,14 @@ class Points(commands.Cog):
             color=config.RAVEN_RED
         )
         await interaction.response.send_message(embed=points_embed)
+    
+    @remove_points.error
+    async def remove_points_error(self, interaction: discord.Interaction, error: app_commands.errors):
+        if isinstance(error, app_commands.errors.MissingRole):
+            await interaction.response.send_message(embed=discord.Embed(description="{} **You aren't authorized to do that!**".format(config.ERROR_EMOJI), color=config.RAVEN_RED), ephemeral=True)
+        else:
+            raise Exception
+
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(Points(bot))

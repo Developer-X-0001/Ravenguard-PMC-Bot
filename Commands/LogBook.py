@@ -14,6 +14,7 @@ class LogBog(commands.Cog):
     logs_group = app_commands.Group(name="logs", description="Commands related to logging")
 
     @logs_group.command(name="config", description="Configure points logging system.")
+    @app_commands.checks.has_role(config.BOT_OPERATOR_ROLE_ID)
     async def logs_config(self, interaction: discord.Interaction):
         data = self.database.execute("SELECT logs_channel, status FROM LogSettings WHERE guild_id = ?", (interaction.guild.id,)).fetchone()
         settings_embed = discord.Embed(
@@ -46,6 +47,14 @@ class LogBog(commands.Cog):
             )
 
         await interaction.response.send_message(embed=settings_embed, view=LogsConfigureButton(), ephemeral=True)
+    
+    @logs_config.error
+    async def logs_config_error(self, interaction: discord.Interaction, error: app_commands.errors):
+        if isinstance(error, app_commands.errors.MissingRole):
+            await interaction.response.send_message(embed=discord.Embed(description="{} **You aren't authorized to do that!**".format(config.ERROR_EMOJI), color=config.RAVEN_RED), ephemeral=True)
+        else:
+            raise Exception
+
 
 
 async def setup(bot: commands.Bot):

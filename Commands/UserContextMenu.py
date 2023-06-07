@@ -28,6 +28,7 @@ class UserContextMenu(commands.Cog):
         self.bot.tree.add_command(self.rank_down_cmd)
     
     async def profile(self, interaction: discord.Interaction, user: discord.Member):
+            
         if user.bot:
             await interaction.response.send_message(embed=discord.Embed(description="{} You can't check on Bots!".format(config.ERROR_EMOJI), color=config.RAVEN_RED), ephemeral=True)
             return
@@ -171,10 +172,15 @@ class UserContextMenu(commands.Cog):
             inline=False
         )
         profile_embed.set_thumbnail(url=config.RANKS[data[4]]['url'])
-        profile_embed.set_image(url=user.display_avatar.url)
+        profile_embed.set_author(name=user.name, icon_url=user.display_avatar.url)
         await interaction.response.send_message(embed=profile_embed)
     
     async def rank_up(self, interaction: discord.Interaction, user: discord.Member):
+        bot_operator_role = interaction.guild.get_role(config.BOT_OPERATOR_ROLE_ID)
+        if bot_operator_role not in interaction.user.roles:
+            await interaction.response.send_message(embed=discord.Embed(description="{} **You aren't authorized to do that!**".format(config.ERROR_EMOJI), color=config.RAVEN_RED), ephemeral=True)
+            return
+        
         RANKS = config.RANKS
         RANK_LIST = config.RANK_LIST
         
@@ -221,6 +227,11 @@ class UserContextMenu(commands.Cog):
                         return
     
     async def rank_down(self, interaction: discord.Interaction, user: discord.Member):
+        bot_operator_role = interaction.guild.get_role(config.BOT_OPERATOR_ROLE_ID)
+        if bot_operator_role not in interaction.user.roles:
+            await interaction.response.send_message(embed=discord.Embed(description="{} **You aren't authorized to do that!**".format(config.ERROR_EMOJI), color=config.RAVEN_RED), ephemeral=True)
+            return
+        
         RANKS = config.RANKS
         RANK_LIST = config.RANK_LIST
         if user.nick:

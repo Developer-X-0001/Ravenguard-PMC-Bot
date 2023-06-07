@@ -59,9 +59,6 @@ class Profile(commands.Cog):
                     paygrade = match.group(1)
                     squad_code = match.group(2)
                     callsign = match.group(3)
-                    print(paygrade)
-                    print(squad_code)
-                    print(callsign)
                     self.database.execute(
                         '''
                             UPDATE UserProfiles SET 

@@ -17,6 +17,11 @@ class MessageContextMenu(commands.Cog):
         self.bot.tree.add_command(self.get_info_cmd)
     
     async def get_info(self, interaction: discord.Interaction, message: discord.Message):
+        bot_operator_role = interaction.guild.get_role(config.BOT_OPERATOR_ROLE_ID)
+        if bot_operator_role not in interaction.user.roles:
+            await interaction.response.send_message(embed=discord.Embed(description="{} **You aren't authorized to do that!**".format(config.ERROR_EMOJI), color=config.RAVEN_RED), ephemeral=True)
+            return
+        
         if message.reactions:
             for reaction in message.reactions:
                 if str(reaction.emoji) == config.DONE_EMOJI:

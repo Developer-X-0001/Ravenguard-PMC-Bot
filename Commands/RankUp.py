@@ -13,6 +13,7 @@ class RankUp(commands.Cog):
         self.database = sqlite3.connect("./Databases/profiles.sqlite")
 
     @app_commands.command(name="rankup", description="Promote a user to a higher rank.")
+    @app_commands.checks.has_role(config.BOT_OPERATOR_ROLE_ID)
     async def rank_up(self, interaction: discord.Interaction, user: discord.Member):
         RANKS = config.RANKS
         RANK_LIST = config.RANK_LIST
@@ -57,6 +58,14 @@ class RankUp(commands.Cog):
                         ).connection.commit()
                         await interaction.response.send_message(embed=discord.Embed(description="{} Successfully updated {}'s rank.".format(config.DONE_EMOJI, user.name), color=config.RAVEN_RED), ephemeral=True)
                         return
+                    
+    @rank_up.error
+    async def rank_up_error(self, interaction: discord.Interaction, error: app_commands.errors):
+        if isinstance(error, app_commands.errors.MissingRole):
+            await interaction.response.send_message(embed=discord.Embed(description="{} **You aren't authorized to do that!**".format(config.ERROR_EMOJI), color=config.RAVEN_RED), ephemeral=True)
+        else:
+            raise Exception
+
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(RankUp(bot))
