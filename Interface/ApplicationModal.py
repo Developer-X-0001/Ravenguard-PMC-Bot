@@ -21,7 +21,8 @@ class ApplicationModal(Modal, title="Ravenguard PMC Application Form"):
             label="Desired Callsign?",
             style=TextStyle.short,
             placeholder="e.g Fox, Jay, Andy, Eclipse, etc",
-            required=True
+            required=True,
+            max_length=16
         )
 
         self.question_three = TextInput(

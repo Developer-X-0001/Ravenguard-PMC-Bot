@@ -96,14 +96,6 @@ class Bot(commands.Bot):
             if filename.startswith('__'):
                 pass
 
-        for filename in os.listdir("./Events"):
-            if filename.endswith('.py'):
-                await self.load_extension('Events.{}'.format(filename[:-3]))
-                print("Loaded {}".format(filename))
-
-            if filename.startswith('__'):
-                pass
-
         await bot.tree.sync()
 
 bot = Bot()

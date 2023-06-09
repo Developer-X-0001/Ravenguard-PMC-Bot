@@ -33,17 +33,17 @@ class MessageContextMenu(commands.Cog):
                     
         await interaction.response.send_message(embed=discord.Embed(description="{} Finding user mentions & points...".format(config.LOAD_EMOJI), color=config.RAVEN_RED), ephemeral=True)
         await asyncio.sleep(2)
-        matches = re.findall(r"\d+\+", message.content)
-        if matches != []:
+        pattern = r'<@(\d+)>\s+(\d+)'
+        matches = re.findall(pattern, message.content)
+        if matches:
             await interaction.edit_original_response(embed=discord.Embed(description="{} Mentions & points found!".format(config.DONE_EMOJI), color=config.RAVEN_RED))
             await asyncio.sleep(1)
             await interaction.edit_original_response(embed=discord.Embed(description="{} Collecting data...".format(config.LOAD_EMOJI), color=config.RAVEN_RED))
-            users = message.mentions
-            users.reverse()
             user_data = ""
             for match in matches:
-                user = users[matches.index(match)]
-                user_data += f"{config.ARROW_EMOJI} **Username:** {user.mention} | **Points:** {match}\n"
+                user = interaction.guild.get_member(int(match[0]))
+                points = match[1]
+                user_data += f"{config.ARROW_EMOJI} **Username:** {user.mention} | **Points:** {points}\n"
             await asyncio.sleep(2)
             await interaction.edit_original_response(embed=discord.Embed(description="{} Done!".format(config.DONE_EMOJI), color=config.RAVEN_RED))
             await asyncio.sleep(1)

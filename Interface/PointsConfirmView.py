@@ -27,11 +27,12 @@ class PointsConfirmButtons(View):
         self.confirm_button.emoji = config.LOAD_EMOJI
         await interaction.response.edit_message(embed=embed, view=self)
 
-        matches = re.findall(r"\d+\+", self.original_message.content)
-        users = self.original_message.mentions
+        pattern = r'<@(\d+)>\s+(\d+)'
+        matches = re.findall(pattern, self.original_message.content)
         user_count = 0
         for match_point in matches:
-            user = users[matches.index(match_point)]
+            user = interaction.guild.get_member(int(match_point[0]))
+            points = match_point[1]
             if user.nick:
                 pattern = r'\[(\w+)-(\w+)\] (\w+)'
 
@@ -52,8 +53,8 @@ class PointsConfirmButtons(View):
                             config.RANKS[paygrade]["name"],
                             paygrade,
                             squad_code,
-                            int(match_point[:-1]),
-                            int(match_point[:-1]),
+                            int(points),
+                            int(points),
                             user.id,
                         )
                     ).connection.commit()
@@ -69,12 +70,12 @@ class PointsConfirmButtons(View):
             if logs_data[1] == 'enabled':
                 given_users = ""
                 for match in matches:
-                    user = users[matches.index(match)]
-                    given_users += "{} {}\n".format(user.mention, match)
+                    user = interaction.guild.get_member(int(match[0]))
+                    given_users += "{} {}\n".format(user.mention, match[1])
                 
                 total_points = 0
                 for match in matches:
-                    total_points += int(match[:-1])
+                    total_points += int(match[1])
 
                 logs_channel = interaction.guild.get_channel(logs_data[0])
                 logs_embed = discord.Embed(

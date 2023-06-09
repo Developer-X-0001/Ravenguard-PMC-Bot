@@ -108,9 +108,10 @@ class UserContextMenu(commands.Cog):
         )
 
         medals = ""
-        medals_data = user_database.execute("SELECT emoji FROM Medals").fetchall()
-        for medal in medals_data:
-            medals += medal[0]
+        for medal in config.MEDALS:
+            medal_role = interaction.guild.get_role(medal["role"])
+            if medal_role in user.roles:
+                medals += medal["emoji"]
 
         ribbons = ""
         ribbons_data = user_database.execute("SELECT emoji FROM Ribbons").fetchall()
