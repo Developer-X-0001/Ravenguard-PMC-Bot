@@ -66,7 +66,6 @@ class Points(commands.Cog):
         else:
             raise Exception
 
-
     @app_commands.command(name="removepoints", description="Remove points from users.")
     @app_commands.checks.has_role(config.BOT_OPERATOR_ROLE_ID)
     async def remove_points(self, interaction: discord.Interaction, amount: int, users: str):
@@ -79,31 +78,25 @@ class Points(commands.Cog):
         for match in matches:
             user = interaction.guild.get_member(int(match))
             data += "{} **Username:** {} | **Points:** {}+\n".format(config.ARROW_EMOJI, user.mention, amount)
-            if user.nick:
-                pattern = r'\[(\w+)-(\w+)\] (\w+)'
-
-                match = re.match(pattern, user.nick)
-                if match:
-                    paygrade = match.group(1)
-                    squad_code = match.group(2)
-                    callsign = match.group(3)
-                    database.execute(
-                        '''
-                            INSERT INTO UserProfiles VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT (user_id) DO UPDATE SET points = points + ? WHERE user_id = ?
-                        ''',
-                        (
-                            user.id,
-                            'Bio and embed color isn\'t configurable yet.',
-                            hex_to_int(hex_code='FFFFFF'),
-                            callsign,
-                            config.RANKS[paygrade]["name"],
-                            paygrade,
-                            squad_code,
-                            amount,
-                            amount,
-                            user.id,
-                        )
-                    ).connection.commit()
+        
+            database.execute(
+                '''
+                    INSERT INTO UserProfiles VALUES (?, ?, ?, ?)
+                    ON CONFLICT(
+                        user_id
+                    ) DO UPDATE SET
+                    points = points + 1
+                    WHERE user_id = ?
+                ''',
+                (
+                    user.id,
+                    "Bio and embed color isn't configurable yet",
+                    hex_to_int(hex_code="FFFFFF"),
+                    amount,
+                    amount,
+                    user.id,
+                )
+            )
 
         points_embed = discord.Embed(
             title="Successfully Updated Points",

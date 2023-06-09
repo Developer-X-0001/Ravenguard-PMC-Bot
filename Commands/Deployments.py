@@ -1,5 +1,5 @@
+import re
 import config
-import sqlite3
 import discord
 
 from discord.ext import commands
@@ -14,15 +14,25 @@ class Deployments(commands.Cog):
     deployments_group = app_commands.Group(name="deployments", description="Commands related to managing and configuring deployments.")
 
     @deployments_group.command(name="create", description="Create a new deployment")
-    @app_commands.checks.has_role(config.BOT_OPERATOR_ROLE_ID)
     async def deploy_create(self, interaction: discord.Interaction):
-        deployment_embed = discord.Embed(
-            title="New Deployment Draft",
-            description="You're going to create a new deployment.\nPlease click \"Next\" to proceed, this will bind a unique identifier with this deployment which makes it accessible in future.",
-            color=config.RAVEN_RED
-        )
+        if interaction.user.nick:
+            pattern = r'\[(\w+)-(\w+)\] (\w+)'
+            match = re.match(pattern, interaction.user.nick)
+            if match:
+                paygrade = match.group(1)
+                if config.RANK_LIST.index(paygrade) >= 6:
+                    deployment_embed = discord.Embed(
+                        title="New Deployment Draft",
+                        description="You're going to create a new deployment.\nPlease click \"Next\" to proceed, this will bind a unique identifier with this deployment which makes it accessible in future.",
+                        color=config.RAVEN_RED
+                    )
 
-        await interaction.response.send_message(embed=deployment_embed, view=DeploymentStartView(), ephemeral=True)
+                    await interaction.response.send_message(embed=deployment_embed, view=DeploymentStartView(), ephemeral=True)
+
+                else:
+                    await interaction.response.send_message(embed=discord.Embed(description="{} **You aren't authorized to do that!**".format(config.ERROR_EMOJI), color=config.RAVEN_RED), ephemeral=True)
+        else:
+            await interaction.response.send_message(embed=discord.Embed(description="{} **You aren't authorized to do that!**".format(config.ERROR_EMOJI), color=config.RAVEN_RED), ephemeral=True)
 
     @deploy_create.error
     async def deploy_create_error(self, interaction: discord.Interaction, error: app_commands.errors):

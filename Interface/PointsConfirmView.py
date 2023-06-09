@@ -33,32 +33,24 @@ class PointsConfirmButtons(View):
         for match_point in matches:
             user = interaction.guild.get_member(int(match_point[0]))
             points = match_point[1]
-            if user.nick:
-                pattern = r'\[(\w+)-(\w+)\] (\w+)'
-
-                match = re.match(pattern, user.nick)
-                if match:
-                    paygrade = match.group(1)
-                    squad_code = match.group(2)
-                    callsign = match.group(3)
-                    profiles_database.execute(
-                        '''
-                            INSERT INTO UserProfiles VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT (user_id) DO UPDATE SET points = points + ? WHERE user_id = ?
-                        ''',
-                        (
-                            user.id,
-                            'None',
-                            hex_to_int(hex_code='FFFFFF'),
-                            callsign,
-                            config.RANKS[paygrade]["name"],
-                            paygrade,
-                            squad_code,
-                            int(points),
-                            int(points),
-                            user.id,
-                        )
-                    ).connection.commit()
-            
+            database.execute(
+                '''
+                    INSERT INTO UserProfiles VALUES (?, ?, ?, ?)
+                    ON CONFLICT(
+                        user_id
+                    ) DO UPDATE SET
+                    points = points + 1
+                    WHERE user_id = ?
+                ''',
+                (
+                    user.id,
+                    "Bio and embed color isn't configurable yet",
+                    hex_to_int(hex_code="FFFFFF"),
+                    points,
+                    points,
+                    user.id,
+                )
+            )
             user_count += 1
         
         logs_data = database.execute("SELECT logs_channel, status FROM LogSettings WHERE guild_id = ?", (interaction.guild.id,)).fetchone()

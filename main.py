@@ -24,10 +24,6 @@ class Bot(commands.Bot):
                     user_id INTEGER,
                     bio TEXT,
                     color INTEGER,
-                    callsign TEXT,
-                    rank TEXT,
-                    paygrade TEXT,
-                    squad TEXT,
                     points INTEGER,
                     Primary Key (user_id)
                 )
