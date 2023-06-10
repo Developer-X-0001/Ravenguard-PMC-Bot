@@ -33,13 +33,13 @@ class PointsConfirmButtons(View):
         for match_point in matches:
             user = interaction.guild.get_member(int(match_point[0]))
             points = match_point[1]
-            database.execute(
+            profiles_database.execute(
                 '''
                     INSERT INTO UserProfiles VALUES (?, ?, ?, ?)
                     ON CONFLICT(
                         user_id
                     ) DO UPDATE SET
-                    points = points + 1
+                    points = points + ?
                     WHERE user_id = ?
                 ''',
                 (
@@ -50,7 +50,7 @@ class PointsConfirmButtons(View):
                     points,
                     user.id,
                 )
-            )
+            ).connection.commit()
             user_count += 1
         
         logs_data = database.execute("SELECT logs_channel, status FROM LogSettings WHERE guild_id = ?", (interaction.guild.id,)).fetchone()

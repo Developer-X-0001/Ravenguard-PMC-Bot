@@ -36,7 +36,7 @@ class DeploymentStartView(View):
         deployment_embed.set_thumbnail(url=config.RAVEN_ICON)
         deployment_embed.set_footer(text="Please select the Co-Host (Optional)")
 
-        database.execute("INSERT INTO Deployments VALUES (?, ?, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)", (deployment_code, interaction.user.id,)).connection.commit()
+        database.execute("INSERT INTO Deployments VALUES (?, ?, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)", (deployment_code, interaction.user.id,)).connection.commit()
         await interaction.response.edit_message(embed=deployment_embed, view=DeploymentCoHostViews(code=deployment_code))
 
 class DeploymentCoHostViews(View):

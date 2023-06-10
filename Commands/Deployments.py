@@ -20,7 +20,7 @@ class Deployments(commands.Cog):
             match = re.match(pattern, interaction.user.nick)
             if match:
                 paygrade = match.group(1)
-                if config.RANK_LIST.index(paygrade) >= 6:
+                if paygrade == "TFH" or paygrade == "HIT" or config.RANK_LIST.index(paygrade) >= 6:
                     deployment_embed = discord.Embed(
                         title="New Deployment Draft",
                         description="You're going to create a new deployment.\nPlease click \"Next\" to proceed, this will bind a unique identifier with this deployment which makes it accessible in future.",

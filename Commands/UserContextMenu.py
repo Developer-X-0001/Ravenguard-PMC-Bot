@@ -115,7 +115,6 @@ class UserContextMenu(commands.Cog):
         
         RANKS = config.RANKS
         RANK_LIST = config.RANK_LIST
-        
         if user.nick:
             pattern = r'\[(\w+)-(\w+)\] (\w+)'
 
@@ -137,24 +136,6 @@ class UserContextMenu(commands.Cog):
                         await user.remove_roles(current_rank_role)
                         await user.add_roles(next_rank_role)
                         await user.edit(nick=f"[{RANK_LIST[next_rank_position]}-{squad_code}] {callsign}")
-                        self.database.execute(
-                            '''
-                                INSERT INTO UserProfiles VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT (user_id) DO UPDATE SET rank = ?, paygrade = ? WHERE user_id = ?
-                            ''',
-                            (
-                                user.id,
-                                'None',
-                                hex_to_int(hex_code='FFFFFF'),
-                                callsign,
-                                RANKS[RANK_LIST[next_rank_position]]['name'],
-                                RANK_LIST[next_rank_position],
-                                squad_code,
-                                0,
-                                RANKS[RANK_LIST[next_rank_position]]['name'],
-                                RANK_LIST[next_rank_position],
-                                user.id,
-                            )
-                        ).connection.commit()
                         await interaction.response.send_message(embed=discord.Embed(description="{} Successfully updated {}'s rank.".format(config.DONE_EMOJI, user.name), color=config.RAVEN_RED), ephemeral=True)
                         return
     
@@ -187,24 +168,6 @@ class UserContextMenu(commands.Cog):
                         await user.remove_roles(current_rank_role)
                         await user.add_roles(next_rank_role)
                         await user.edit(nick=f"[{RANK_LIST[next_rank_position]}-{squad_code}] {callsign}")
-                        self.database.execute(
-                            '''
-                                INSERT INTO UserProfiles VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT (user_id) DO UPDATE SET rank = ?, paygrade = ? WHERE user_id = ?
-                            ''',
-                            (
-                                user.id,
-                                'None',
-                                hex_to_int(hex_code='FFFFFF'),
-                                callsign,
-                                RANKS[RANK_LIST[next_rank_position]]['name'],
-                                RANK_LIST[next_rank_position],
-                                squad_code,
-                                0,
-                                RANKS[RANK_LIST[next_rank_position]]['name'],
-                                RANK_LIST[next_rank_position],
-                                user.id,
-                            )
-                        ).connection.commit()
                         await interaction.response.send_message(embed=discord.Embed(description="{} Successfully updated {}'s rank.".format(config.DONE_EMOJI, user.name), color=config.RAVEN_RED), ephemeral=True)
                         return
 

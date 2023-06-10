@@ -103,5 +103,5 @@ class DeploymentSelector(Select):
             value=restrictions,
             inline=False
         )
-
+        deployment_embed.set_thumbnail(url=config.RAVEN_ICON)
         await interaction.response.edit_message(embed=deployment_embed, view=DeploymentLoadView(code=self.values[0]))
