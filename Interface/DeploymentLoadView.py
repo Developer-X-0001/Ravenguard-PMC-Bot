@@ -2,8 +2,9 @@ import config
 import sqlite3
 import discord
 
+from discord import ButtonStyle, TextStyle
 from Interface.DeploymentEditView import DeploymentLoadView
-from discord.ui import Select, View
+from discord.ui import Select, View, button, Button, Modal, TextInput
 
 database = sqlite3.connect("./Databases/deployments.sqlite")
 
@@ -11,6 +12,10 @@ class DeploymentSelectView(View):
     def __init__(self, guild: discord.Guild):
         super().__init__(timeout=None)
         self.add_item(DeploymentSelector(guild=guild))
+
+    @button(label="Load From Message", emoji=config.LINK_EMOJI, style=ButtonStyle.gray)
+    async def load_from_message_button(self, interaction: discord.Interactionn, button: Button):
+        print()
 
 class DeploymentSelector(Select):
     def __init__(self, guild: discord.Guild):
@@ -105,3 +110,30 @@ class DeploymentSelector(Select):
         )
         deployment_embed.set_thumbnail(url=config.RAVEN_ICON)
         await interaction.response.edit_message(embed=deployment_embed, view=DeploymentLoadView(code=self.values[0]))
+
+class DeploymentLoadModal(Modal, title="Deployment Load from Message"):
+    def __init__(self):
+        super().__init__(timeout=None)
+    
+        self.message_id = TextInput(
+            label="Message ID",
+            style=TextStyle.short,
+            placeholder="Type the id of older deployment message",
+            required=True
+        )
+
+        self.add_item(self.message_id)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        if self.message_id.value.isdigit():
+            deployments_channel = interaction.guild.get_channel(config.DEPLOYMENT_CHANNEL_ID)
+            deployment_message = await deployments_channel.fetch_message(self.message_id.value)
+
+            if deployment_message:
+                deployment_id = deployment_message.embeds[0].footer.text
+                data = database.execute("SELECT deployment_id FROM Deployments WHERE deployment_id = ?", (deployment_id,)).fetchone()
+                if data:
+                    deployment_embed = deployment_message.embeds[0]
+        
+        else:
+            await interaction.response.send_message(embed=discord.Embed())

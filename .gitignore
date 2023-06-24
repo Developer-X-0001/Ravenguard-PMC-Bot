@@ -5,6 +5,10 @@ __pycache__/
 config.py
 test.py
 Databases/
+Ravenguard_Bot.zip
+Archives/
+.vscode/
+settings.json
 
 # C extensions
 *.so
