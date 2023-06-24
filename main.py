@@ -84,13 +84,15 @@ class Bot(commands.Bot):
         self.add_view(DeploymentButtons())
         self.add_view(ApplicationButtons())
 
-        for filename in os.listdir("./Commands"):
-            if filename.endswith('.py'):
-                await self.load_extension('Commands.{}'.format(filename[:-3]))
-                print("Loaded {}".format(filename))
+        # for filename in os.listdir("./Commands"):
+        #     if filename.endswith('.py'):
+        #         await self.load_extension('Commands.{}'.format(filename[:-3]))
+        #         print("Loaded {}".format(filename))
 
-            if filename.startswith('__'):
-                pass
+        #     if filename.startswith('__'):
+        #         pass
+
+        await self.load_extension('Commands.Applications')
 
         await bot.tree.sync()
 

@@ -7,7 +7,7 @@ test.py
 Databases/
 Ravenguard_Bot.zip
 Archives/
-.vscode/
+**/.vscode/
 settings.json
 
 # C extensions
